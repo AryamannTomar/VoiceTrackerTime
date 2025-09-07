@@ -31,7 +31,7 @@ def generate_tree(start_path, indent=""):
         for item in items:
             if (
                 item in {".git", "v12", "rg_alias", "myenv", ".env", "Images", "FW__Contracts"} 
-                or item.endswith(".py")
+                # or item.endswith(".py")
                 or item.endswith(".jpg")
             ):
                 continue
