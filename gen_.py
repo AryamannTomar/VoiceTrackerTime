@@ -18,7 +18,8 @@ def run_git_commands():
         subprocess.run(["git","commit","-m",commit_message],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         subprocess.run(["git","push"],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as e:
-        print("❌ An error occurred while running git commands.",e)
+        print("❌ An error occurred while running git commands. - GIT TREE CLEAN NOTHING TO COMMIT",e)
+        return
     print("✅ git")
     
 def generate_tree(start_path, indent=""):
