@@ -67,6 +67,18 @@ def _announce_time(t='') -> None:
     except Exception as e:
         print(f"❌ Error announcing time: {e}")
 
+def _announce_now_and_next(next_dt: datetime.datetime) -> None:
+    try:
+        now_text = _get_current_time_text()
+        next_text = f"Next announcement will be made at {next_dt.strftime('%I:%M %p')}"
+        print(f"🔊 Announcing: {now_text}")
+        print(f"🔄 {next_text}")
+        tts_engine.say(now_text)
+        tts_engine.say(next_text)
+        tts_engine.runAndWait()
+    except Exception as e:
+        print(f"❌ Error announcing now/next: {e}")
+
 def _start_():
     interval_input = input("Enter time interval in minutes (default: 5min): ").strip()
     interval_minutes = 5
@@ -88,34 +100,29 @@ def _start_():
     print(f"⏰ Announcement interval: {interval_minutes} minutes")
     is_running = True
     
-    # Get initial time and calculate next announcement time
+    # Compute next announcement strictly in the future and announce now+next together
+    print("\n🔊 Starting with initial announcements...")
     now = datetime.datetime.now()
-    next_announcement = now.replace(second=0, microsecond=0)
-    
-    # Calculate the next multiple of interval_minutes
-    current_minute = now.minute
-    minutes_to_add = interval_minutes - (current_minute % interval_minutes)
-    if minutes_to_add == interval_minutes:
-        minutes_to_add = 0  # We're exactly at an interval
-    
-    next_announcement += datetime.timedelta(minutes=minutes_to_add)
+    base_minute = now.replace(second=0, microsecond=0)
+    remainder = base_minute.minute % interval_minutes
+    minutes_to_add = (interval_minutes - remainder) % interval_minutes
+    next_announcement = base_minute + datetime.timedelta(minutes=minutes_to_add)
+    if next_announcement <= now:
+        next_announcement += datetime.timedelta(minutes=interval_minutes)
+    _announce_now_and_next(next_announcement)
     
     try:
         while is_running:
             # Calculate precise time to wait
             now = datetime.datetime.now()
             if now >= next_announcement:
-                # We're behind schedule, announce immediately
-                _announce_time()
-                
-                # Calculate next announcement time
-                next_announcement += datetime.timedelta(minutes=interval_minutes)
+                # Compute the following announcement strictly in the future
+                next_announcement = next_announcement + datetime.timedelta(minutes=interval_minutes)
                 next_announcement = next_announcement.replace(second=0, microsecond=0)
-                
-                # Announce next time
-                next_announcement_str = f"Next announcement at: {next_announcement.strftime('%I:%M %p')}"
-                print(f"🔄 {next_announcement_str}")
-                _announce_time(next_announcement_str)
+                while next_announcement <= now:
+                    next_announcement += datetime.timedelta(minutes=interval_minutes)
+                # Announce current time and the upcoming next time in one TTS run
+                _announce_now_and_next(next_announcement)
             else:
                 # Calculate precise sleep time
                 time_to_wait = (next_announcement - now).total_seconds()

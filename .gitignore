@@ -8,5 +8,6 @@ wheels/
 .python-version   
 .pyproject.toml
 # Virtual environments
+.demo
 .venv
 .v12
